@@ -1,6 +1,8 @@
 package io.newblack.eva.elasticsearch
 
+import io.newblack.elastic.EVAPlugin
 import org.apache.lucene.analysis.TokenStream
+import org.elasticsearch.common.logging.Loggers
 import org.elasticsearch.common.settings.Setting
 import org.elasticsearch.common.settings.Settings
 import org.elasticsearch.common.settings.SettingsException
@@ -15,6 +17,8 @@ class FlexibleSynonymTokenFilterFactory(
         private val synonymResourceFactory: SynonymResourceFactory,
         private val synonymWatcher: SynonymWatcher
 ) : AbstractTokenFilterFactory(indexSettings, name, settings) {
+
+    private val logger = Loggers.getLogger(EVAPlugin::class.java, "eva")
 
     companion object {
         val SYNONYM_BASE_URL = Setting.simpleString("synonyms_base")

@@ -9,30 +9,28 @@ import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
-interface SynonymWatcher {
-    fun startWatching(index: Index, filter: DynamicSynonymFilter, resource: SynonymResource)
-    fun stopWatching(index: Index)
-}
-
 data class FilterWithResource(val filter: DynamicSynonymFilter, val resource: SynonymResource)
 
-class ScheduledSynonymWatcher(
+class SynonymWatcher(
         private val scheduler: ScheduledExecutorService
-) : AbstractLifecycleComponent(), SynonymWatcher {
-    private val logger = Loggers.getLogger(ScheduledSynonymWatcher::class.java, "flexible-synonyms")
+) : AbstractLifecycleComponent() {
+    private val logger = Loggers.getLogger(SynonymWatcher::class.java, "flexible-synonyms")
 
     private val filters: MutableMap<String, MutableCollection<FilterWithResource>> = ConcurrentHashMap()
 
     private var schedule: ScheduledFuture<*>? = null
 
-    override fun startWatching(index: Index, filter: DynamicSynonymFilter, resource: SynonymResource) {
+    fun startWatching(index: Index, filter: DynamicSynonymFilter, resource: SynonymResource) {
         logger.info("start watching filter/resource for index {}", index.name)
         filters.getOrPut(index.uuid, ::mutableListOf).add(FilterWithResource(filter, resource))
     }
 
-    override fun stopWatching(index: Index) {
-        logger.info("stop watching all filters/resources for index {}", index.name)
-        filters.remove(index.uuid)
+    fun stopWatching(index: Index) {
+        val current = filters.remove(index.uuid)
+
+        if(current != null) {
+            logger.info("stop watching all filters/resources for index {}", index.name)
+        }
     }
 
     override fun doStart() {

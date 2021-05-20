@@ -24,6 +24,10 @@ class EVAScriptEngine : ScriptEngine {
         return "native"
     }
 
+    override fun getSupportedContexts(): MutableSet<ScriptContext<*>> {
+        return mutableSetOf(ScoreScript.CONTEXT, FilterScript.CONTEXT)
+    }
+
     override fun <T> compile(scriptName: String, scriptSource: String,
                              context: ScriptContext<T>, params: Map<String, String>): T {
 

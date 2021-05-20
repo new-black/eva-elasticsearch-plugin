@@ -11,72 +11,75 @@ import org.apache.lucene.analysis.synonym.SynonymMap
 import org.apache.lucene.analysis.synonym.WordnetSynonymParser
 import org.elasticsearch.SpecialPermission
 import org.elasticsearch.common.logging.Loggers
+import java.lang.Exception
 import java.security.AccessController
 import java.security.PrivilegedAction
 
-interface SynonymResource {
-    fun load(): SynonymMap
-    fun needsReload(): Boolean
-}
-
-class WebSynonymResource(
+class SynonymResource(
         private val expand: Boolean,
         private val analyzer: Analyzer,
         private val format: String,
         private val location: String,
         private val createClient: () -> CloseableHttpClient
-) : SynonymResource {
+) {
 
     companion object {
         private val EMPTY_SYNONYM_MAP = SynonymMap.Builder().build()
     }
 
-    private val logger = Loggers.getLogger(WebSynonymResource::class.java, "flexible-synonyms")
+    private val logger = Loggers.getLogger(SynonymResource::class.java, "flexible-synonyms")
 
     private var lastModified: String? = null
     private var eTags: String? = null
 
-    override fun load(): SynonymMap {
+    fun load(): SynonymMap {
         val request = HttpGet(location)
 
         createClient().use { client ->
 
             SpecialPermission.check()
-            return AccessController.doPrivileged<SynonymMap>( object : PrivilegedAction<SynonymMap> {
-                override fun run(): SynonymMap {
-                    client.execute(request).use {
-                        logger.debug("response status for GET: {}", it.statusLine)
 
-                        if (it.statusLine.statusCode == HttpStatus.SC_OK) {
-                            // Update last modified and etag for next request
-                            lastModified = it.getLastHeader(HttpHeaders.LAST_MODIFIED)?.value
-                            eTags = it.getLastHeader(HttpHeaders.ETAG)?.value
+            try {
+                return AccessController.doPrivileged(object : PrivilegedAction<SynonymMap> {
+                    override fun run(): SynonymMap {
+                        client.execute(request).use {
+                            logger.debug("response status for GET: {}", it.statusLine)
 
-                            logger.debug("updating last modified with: {}", lastModified)
-                            logger.debug("updating etag with: {}", eTags)
+                            if (it.statusLine.statusCode == HttpStatus.SC_OK) {
+                                // Update last modified and etag for next request
+                                lastModified = it.getLastHeader(HttpHeaders.LAST_MODIFIED)?.value
+                                eTags = it.getLastHeader(HttpHeaders.ETAG)?.value
 
-                            if (it.entity.contentLength == 0L) {
-                                return EMPTY_SYNONYM_MAP
+                                logger.debug("updating last modified with: {}", lastModified)
+                                logger.debug("updating etag with: {}", eTags)
+
+                                if (it.entity.contentLength == 0L) {
+                                    return EMPTY_SYNONYM_MAP
+                                }
+
+                                val parser = createParser(format, expand, analyzer)
+                                parser.parse(it.entity.content.reader())
+                                return parser.build()
                             }
 
-                            val parser = createParser(format, expand, analyzer)
-                            parser.parse(it.entity.content.reader())
-                            return parser.build()
+                            return EMPTY_SYNONYM_MAP
                         }
-
-                        return EMPTY_SYNONYM_MAP
                     }
-                }
 
-            })
+                })
+            } catch (ex: Exception) {
+                logger.warn("Caught exception loading synonyms: ${ex.message}")
+                return EMPTY_SYNONYM_MAP
+            }
         }
-
     }
 
-    override fun needsReload(): Boolean {
+    fun needsReload(): Boolean {
         SpecialPermission.check()
-        return AccessController.doPrivileged<Boolean>( object : PrivilegedAction<Boolean> {
-            override fun run(): Boolean {
+
+        try {
+
+            return AccessController.doPrivileged(PrivilegedAction {
                 logger.debug("checking if reload is required for: {}", location)
 
                 val request = HttpHead(location)
@@ -108,9 +111,12 @@ class WebSynonymResource(
                     }
                 }
 
-                return reloadRequired
-            }
-        })
+                reloadRequired
+            })
+        } catch (ex: Exception) {
+            logger.warn("Caught exception checking if synonyms need reloading: ${ex.message}")
+            return false
+        }
     }
 
 }
