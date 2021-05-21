@@ -72,8 +72,6 @@ class EVAPlugin : Plugin(), ScriptPlugin, SearchPlugin, AnalysisPlugin, ActionPl
                     indexSettings: IndexSettings,
                     reason: IndicesClusterStateService.AllocatedIndices.IndexRemovalReason
             ) {
-                logger.info("after index removed called {} because {}", index.name, reason.name)
-
                 watcher.stopWatching(index)
             }
         })
