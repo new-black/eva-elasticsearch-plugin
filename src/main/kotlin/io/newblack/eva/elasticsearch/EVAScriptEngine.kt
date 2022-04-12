@@ -16,6 +16,7 @@ import org.elasticsearch.script.FilterScript
 import org.elasticsearch.search.aggregations.support.values.ScriptLongValues
 import org.elasticsearch.search.lookup.SearchLookup
 import org.elasticsearch.script.ScoreScript
+import org.elasticsearch.script.NumberSortScript
 import org.apache.logging.log4j.ThreadContext.containsKey
 import org.elasticsearch.index.fielddata.ScriptDocValues
 
@@ -40,7 +41,7 @@ class EVAScriptEngine : ScriptEngine {
                 val factory = ScoreScript.Factory(::EVAStockScoreScriptFactory)
                 return context.factoryClazz.cast(factory)
             } else {
-                val factory = ScoreScript.Factory(::EVAStockSortScriptFactory)
+                val factory = NumberSortScript.Factory(::EVAStockSortScriptFactory)
                 return context.factoryClazz.cast(factory)
             }
         } else if(scriptSource == "filter_variation_stock") {
@@ -54,7 +55,7 @@ class EVAScriptEngine : ScriptEngine {
     override fun close() {}
 
     private class EVAStockSortScriptFactory(private val params: Map<String, Any>,
-                                            private val lookup: SearchLookup) : ScoreScript.LeafFactory {
+                                            private val lookup: SearchLookup) : NumberSortScript.LeafFactory {
         override fun needs_score(): Boolean {
             return false
         }
@@ -81,10 +82,10 @@ class EVAScriptEngine : ScriptEngine {
         private class Script(private val orgIDs: LongArray,
                              private val boostAmount: Double,
                              private val stock: LongIntHashMap, params: Map<String, Any>,
-                             lookup: SearchLookup, leafContext: LeafReaderContext)
-            : ScoreScript(params, lookup, leafContext) {
+                             lookup: SearchLookup, context: LeafReaderContext)
+            : NumberSortScript(params, lookup, context) {
 
-            override fun execute(explanation: ExplanationHolder?): Double {
+            override fun execute(): Double {
                 val productID = (doc["product_id"] as ScriptDocValues.Longs)[0]
 
                 for (orgID in orgIDs) {
@@ -101,7 +102,7 @@ class EVAScriptEngine : ScriptEngine {
         }
 
         @Throws(IOException::class)
-        override fun newInstance(context: LeafReaderContext): ScoreScript {
+        override fun newInstance(context: LeafReaderContext): NumberSortScript {
 
             val stock = ReloadStockScheduler.stockMap
 
