@@ -11,7 +11,6 @@ import org.elasticsearch.common.settings.ClusterSettings
 import org.elasticsearch.common.settings.IndexScopedSettings
 import org.elasticsearch.common.settings.Settings
 import org.elasticsearch.common.settings.SettingsFilter
-import org.elasticsearch.common.xcontent.NamedXContentRegistry
 import org.elasticsearch.env.Environment
 import org.elasticsearch.env.NodeEnvironment
 import org.elasticsearch.script.*
@@ -24,6 +23,7 @@ import org.elasticsearch.index.analysis.TokenFilterFactory
 import org.elasticsearch.index.shard.IndexEventListener
 import org.elasticsearch.indices.analysis.AnalysisModule
 import org.elasticsearch.indices.cluster.IndicesClusterStateService
+import org.elasticsearch.xcontent.NamedXContentRegistry
 import org.elasticsearch.plugins.*
 import org.elasticsearch.repositories.RepositoriesService
 import org.elasticsearch.rest.RestController

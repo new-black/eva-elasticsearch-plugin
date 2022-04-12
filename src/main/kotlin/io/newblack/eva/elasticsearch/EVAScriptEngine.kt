@@ -15,6 +15,7 @@ import org.apache.lucene.index.Term
 import org.elasticsearch.script.FilterScript
 import org.elasticsearch.search.aggregations.support.values.ScriptLongValues
 import org.elasticsearch.search.lookup.SearchLookup
+import org.elasticsearch.script.DocReader
 import org.elasticsearch.script.ScoreScript
 import org.elasticsearch.script.NumberSortScript
 import org.apache.logging.log4j.ThreadContext.containsKey
@@ -82,8 +83,8 @@ class EVAScriptEngine : ScriptEngine {
         private class Script(private val orgIDs: LongArray,
                              private val boostAmount: Double,
                              private val stock: LongIntHashMap, params: Map<String, Any>,
-                             lookup: SearchLookup, context: LeafReaderContext)
-            : NumberSortScript(params, lookup, context) {
+                             lookup: SearchLookup, reader: DocReader)
+            : NumberSortScript(params, lookup, reader) {
 
             override fun execute(): Double {
                 val productID = (doc["product_id"] as ScriptDocValues.Longs)[0]
@@ -102,11 +103,11 @@ class EVAScriptEngine : ScriptEngine {
         }
 
         @Throws(IOException::class)
-        override fun newInstance(context: LeafReaderContext): NumberSortScript {
+        override fun newInstance(reader: DocReader): NumberSortScript {
 
             val stock = ReloadStockScheduler.stockMap
 
-            return Script(orgIDs, boostAmount, stock, params, lookup, context)
+            return Script(orgIDs, boostAmount, stock, params, lookup, reader)
         }
     }
 
@@ -138,8 +139,8 @@ class EVAScriptEngine : ScriptEngine {
         private class Script(private val orgIDs: LongArray,
                              private val boostAmount: Double,
                              private val stock: LongIntHashMap, params: Map<String, Any>,
-                             lookup: SearchLookup, leafContext: LeafReaderContext)
-            : ScoreScript(params, lookup, leafContext) {
+                             lookup: SearchLookup, reader: DocReader)
+            : ScoreScript(params, lookup, reader) {
             override fun execute(explanation: ExplanationHolder?): Double {
                 val productID = (doc["product_id"] as ScriptDocValues.Longs)[0]
 
@@ -157,11 +158,11 @@ class EVAScriptEngine : ScriptEngine {
         }
 
         @Throws(IOException::class)
-        override fun newInstance(context: LeafReaderContext): ScoreScript {
+        override fun newInstance(reader: DocReader): ScoreScript {
 
             val stock = ReloadStockScheduler.stockMap
 
-            return Script(orgIDs, boostAmount, stock, params, lookup, context)
+            return Script(orgIDs, boostAmount, stock, params, lookup, reader)
         }
     }
 
@@ -178,8 +179,8 @@ class EVAScriptEngine : ScriptEngine {
         private class Script(private val orgIDs: LongArray,
                              private val stock: LongIntHashMap,
                              params: Map<String, Any>,
-                             lookup: SearchLookup, leafContext: LeafReaderContext)
-            : FilterScript(params, lookup, leafContext) {
+                             lookup: SearchLookup, reader: DocReader)
+            : FilterScript(params, lookup, reader) {
 
             override fun execute(): Boolean {
 
@@ -199,11 +200,11 @@ class EVAScriptEngine : ScriptEngine {
         }
 
         @Throws(IOException::class)
-        override fun newInstance(context: LeafReaderContext): FilterScript {
+        override fun newInstance(reader: DocReader): FilterScript {
 
             val stock = ReloadStockScheduler.stockMap
 
-            return Script(orgIDs, stock, params, lookup, context)
+            return Script(orgIDs, stock, params, lookup, reader)
         }
     }
 
@@ -238,8 +239,8 @@ class EVAScriptEngine : ScriptEngine {
                              private val variationValues: IntArray,
                              params: Map<String, Any>,
                              lookup: SearchLookup,
-                             leafContext: LeafReaderContext)
-            : FilterScript(params, lookup, leafContext) {
+                             reader: DocReader)
+            : FilterScript(params, lookup, reader) {
 
             override fun execute(): Boolean {
 
@@ -266,9 +267,9 @@ class EVAScriptEngine : ScriptEngine {
         }
 
         @Throws(IOException::class)
-        override fun newInstance(context: LeafReaderContext): FilterScript {
+        override fun newInstance(reader: DocReader): FilterScript {
 
-            return Script(orgIDs, stockMap, variationValues, params, lookup, context)
+            return Script(orgIDs, stockMap, variationValues, params, lookup, reader)
         }
     }
 }
