@@ -1,7 +1,7 @@
 package io.newblack.elastic
 
 import io.newblack.eva.elasticsearch.*
-import org.elasticsearch.client.Client
+import org.elasticsearch.client.internal.Client
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver
 import org.elasticsearch.cluster.node.DiscoveryNodes
 import org.elasticsearch.cluster.service.ClusterService

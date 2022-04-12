@@ -7,4 +7,4 @@ docker run \
     -v C:/code/eva-plugin/bin/../build/elasticsearch:/usr/share/elasticsearch/plugins/eva-plugin \
     -v C:/code/eva-plugin/bin/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml \
     -v E:/data/elasticsearch/:/usr/share/elasticsearch/data \
-    elasticsearch:7.17.2
+    elasticsearch:8.1.2

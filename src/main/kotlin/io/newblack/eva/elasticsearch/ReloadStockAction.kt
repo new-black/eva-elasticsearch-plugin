@@ -2,7 +2,7 @@ package io.newblack.eva.elasticsearch
 
 import io.newblack.elastic.ReloadStockScheduler
 import org.apache.logging.log4j.core.appender.rolling.action.AbstractPathAction
-import org.elasticsearch.client.node.NodeClient
+import org.elasticsearch.client.internal.node.NodeClient
 import org.elasticsearch.rest.*
 import org.elasticsearch.rest.action.cat.AbstractCatAction
 
